@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Faruk Money Tech - Play & Earn</title>
+    
+    <script src='//libtl.com/sdk.js' data-zone='10839270' data-sdk='show_10839270'></script>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; overflow: hidden; touch-action: manipulation; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #game-container { position: relative; width: 100%; height: 350px; background: rgba(0,0,0,0.3); border-radius: 20px; overflow: hidden; touch-action: none; }
+        .coin { position: absolute; font-size: 28px; cursor: pointer; user-select: none; }
+        .basket { position: absolute; bottom: 15px; width: 70px; height: 12px; background: #3b82f6; border-radius: 10px; box-shadow: 0 0 20px #3b82f6; transition: 0.1s; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1 id="user-name" class="text-lg font-bold text-blue-400 font-mono">PLAYER</h1>
+            <p class="text-[10px] text-gray-400">FarukMoneyTech Bot</p>
+        </div>
+        <div class="glass px-4 py-2 rounded-full text-yellow-400 font-bold border border-yellow-500/30">
+            💰 <span id="score">0</span> pts
+        </div>
+    </div>
+
+    <div id="game-container" class="mb-6 border-2 border-blue-500/20 shadow-lg shadow-blue-500/5">
+        <div id="basket" class="basket" style="left: 42%;"></div>
+        <div id="start-msg" class="absolute inset-0 flex items-center justify-center bg-black/70 z-10">
+            <div class="text-center">
+                <h2 class="text-xl font-bold mb-4">Catch the Coins!</h2>
+                <button onclick="startGame()" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-2xl font-bold text-lg transition shadow-lg">START PLAYING</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <button onclick="showAd()" class="glass p-4 rounded-2xl text-sm font-bold border-b-4 border-blue-500 active:translate-y-1 transition">
+            📺 WATCH AD <br><span class="text-[10px] text-blue-300">(+50 Points)</span>
+        </button>
+        <button onclick="tg.close()" class="glass p-4 rounded-2xl text-sm font-bold border-b-4 border-red-500 active:translate-y-1 transition text-red-400">
+            ❌ EXIT APP
+        </button>
+    </div>
+
+    <div class="glass p-3 rounded-xl text-center border border-white/5">
+        <p class="text-[10px] text-gray-500 uppercase tracking-[2px]">High Quality Mini App by Faruk</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        const userName = tg.initDataUnsafe?.user?.first_name || "Trader";
+        document.getElementById('user-name').innerText = userName.toUpperCase();
+
+        let score = 0;
+        let gameActive = false;
+        const container = document.getElementById('game-container');
+        const basket = document.getElementById('basket');
+        const scoreEl = document.getElementById('score');
+
+        // Touch Control for Mobile
+        container.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            let touch = e.touches[0];
+            let rect = container.getBoundingClientRect();
+            let x = touch.clientX - rect.left - (basket.offsetWidth / 2);
+            if (x >= 0 && x <= (container.offsetWidth - basket.offsetWidth)) {
+                basket.style.left = x + 'px';
+            }
+            e.preventDefault();
+        }, {passive: false});
+
+        function startGame() {
+            document.getElementById('start-msg').style.display = 'none';
+            gameActive = true;
+            score = 0;
+            scoreEl.innerText = score;
+            spawnCoin();
+        }
+
+        function spawnCoin() {
+            if (!gameActive) return;
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.innerHTML = '🪙';
+            coin.style.left = Math.random() * (container.offsetWidth - 40) + 'px';
+            coin.style.top = '-40px';
+            container.appendChild(coin);
+
+            let speed = 4 + (score / 200); // স্কোর বাড়লে স্পিড বাড়বে
+            let fallInterval = setInterval(() => {
+                let top = parseInt(coin.style.top);
+                
+                // Collision Detection
+                if (top > container.offsetHeight - 55 && top < container.offsetHeight - 25) {
+                    let coinX = parseInt(coin.style.left);
+                    let basketX = parseInt(basket.style.left);
+                    
+                    if (coinX > basketX - 25 &&
